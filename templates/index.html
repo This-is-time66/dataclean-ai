@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DataClean AI — Agentic CSV Analyst</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">DataClean<span>AI</span></div>
+    <div class="nav-badge"></div>
+  </div>
+  <div class="nav-right" id="nav-right">
+    <!-- Filled by JS -->
+  </div>
+</nav>
+
+<!-- ═══════════ AUTH MODAL ═══════════ -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card" style="position:relative;">
+    <button class="auth-close" id="auth-close">✕</button>
+    <div class="auth-header">
+      <h2>Welcome Back</h2>
+      <p id="auth-subtitle">Sign in to save your analyses and view history</p>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+
+    <!-- Login Form -->
+    <div id="form-login">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••"/>
+      </div>
+      <button class="btn-auth" id="btn-login-submit">Sign In</button>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="form-signup" style="display:none">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="Enter your name"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password <span style="color:var(--muted);font-weight:400;"></span></label>
+        <input type="password" id="signup-password" placeholder="Min. 6 characters"/>
+      </div>
+      <button class="btn-auth" id="btn-signup-submit">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROFILE MODAL ═══════════ -->
+<div class="profile-overlay" id="profile-overlay">
+  <div class="profile-card">
+    <div class="profile-header-bg">
+      <button class="profile-close" id="profile-close">✕</button>
+      <div class="profile-avatar-large" id="profile-avatar-large">–</div>
+      <div class="profile-name-display" id="profile-name-display">–</div>
+      <div class="profile-email-display" id="profile-email-display">–</div>
+    </div>
+    <div class="profile-body">
+      <div class="profile-info-card">
+        <div class="profile-info-row">
+          <span class="profile-info-label">Full Name</span>
+          <span class="profile-info-value" id="pi-name">–</span>
+        </div>
+        <div class="profile-info-row">
+          <span class="profile-info-label">Email</span>
+          <span class="profile-info-value" id="pi-email">–</span>
+        </div>
+        <div class="profile-info-row">
+          <span class="profile-info-label">Member Since</span>
+          <span class="profile-info-value" id="pi-since">–</span>
+        </div>
+        <div class="profile-info-row">
+          <span class="profile-info-label">Analyses Saved</span>
+          <span class="profile-info-value" id="pi-count">–</span>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button class="btn-profile-action btn-profile-logout" onclick="logoutFromProfile()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+        <button class="btn-profile-action btn-profile-delete" id="btn-del-account" onclick="toggleDeleteConfirm()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Delete Account
+        </button>
+        <div class="profile-delete-confirm" id="delete-confirm-box">
+          <p>⚠️ This will permanently delete your account and all saved analyses. This action <strong>cannot be undone</strong>.</p>
+          <div class="profile-delete-confirm-btns">
+            <button class="btn-del-cancel" onclick="toggleDeleteConfirm()">Cancel</button>
+            <button class="btn-del-confirm" id="btn-del-confirm-yes" onclick="deleteAccount()">Yes, Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LAYOUT ═══════════ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-header-text">
+        <h3>Analysis History</h3>
+        <p id="sidebar-count">Loading…</p>
+      </div>
+      <button class="sidebar-close-btn" onclick="closeSidebar()" title="Close panel">✕</button>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="sidebar-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        No analyses yet
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <section class="hero" id="hero-section">
+      <div class="hero-label">Agentic CSV Analyst</div>
+      <h1>Clean your data.<br/><em>Intelligently.</em></h1>
+      <p>Upload any CSV (up to 1 MB) and our AI agent will perform full EDA, impute missing values, encode categorical variables, and return a production-ready dataset.</p>
+    </section>
+
+    <div class="upload-wrap">
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".csv"/>
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="drop-title">Drop your CSV file here</div>
+        <div class="drop-sub"><strong>Click to browse</strong> &nbsp;·&nbsp; Max 1 MB &nbsp;·&nbsp; .csv only</div>
+      </div>
+      <div class="file-selected" id="file-selected">
+        <div class="file-icon">CSV</div>
+        <div class="file-meta">
+          <div class="fname" id="file-name">—</div>
+          <div class="fsize" id="file-size">—</div>
+        </div>
+        <button class="file-remove" id="file-remove">✕</button>
+      </div>
+      <button class="btn-analyze" id="btn-analyze" disabled>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Analyse with AI Agent
+      </button>
+    </div>
+
+    <div class="error-box" id="error-box">
+      <div class="error-inner">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="error-msg">Something went wrong.</span>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="pipeline">
+        <div class="pipe-step" id="step-eda">   <span class="dot"></span>EDA</div>
+        <div class="pipe-step" id="step-plan">  <span class="dot"></span>Planner</div>
+        <div class="pipe-step" id="step-clean"> <span class="dot"></span>Cleaner</div>
+        <div class="pipe-step" id="step-encode"><span class="dot"></span>Encoder</div>
+        <div class="pipe-step" id="step-story"> <span class="dot"></span>Storyteller</div>
+      </div>
+      <div class="progress-log" id="progress-log">Initialising agent…</div>
+    </div>
+
+    <div id="results">
+      <div id="history-viewing-banner" class="history-banner" style="display:none;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>You are viewing a previously saved analysis.</span>
+      </div>
+      <div class="sec-header fade-up"><h2>AI Summary</h2><span class="tag"></span></div>
+      <div class="summary-card fade-up stagger-1"><p id="ai-summary"></p></div>
+      <hr class="divider"/>
+      <div class="sec-header fade-up"><h2>Overview</h2><span class="tag">Before vs After</span></div>
+      <div class="stat-grid fade-up stagger-1" id="stat-grid"></div>
+      <hr class="divider"/>
+      <div class="sec-header fade-up"><h2>Column Analysis</h2><span class="tag">EDA Report</span></div>
+      <div class="col-grid fade-up stagger-2" id="col-grid"></div>
+      <hr class="divider"/>
+      <div class="sec-header fade-up"><h2>Process Logs</h2><span class="tag">Agent Steps</span></div>
+      <div class="logs-wrap fade-up stagger-3" id="logs-wrap"></div>
+      <hr class="divider"/>
+      <div class="sec-header fade-up"><h2>Cleaned Dataset</h2><span class="tag">Preview</span></div>
+      <div class="table-wrap fade-up stagger-4">
+        <div class="table-toolbar">
+          <span class="table-info" id="table-info"></span>
+          <input class="search-input" type="text" id="table-search" placeholder="Search rows…"/>
+        </div>
+        <div class="table-scroll"><table id="data-table"><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+      <div class="download-bar fade-up">
+        <button class="btn-dl btn-dl-primary" id="btn-dl-csv">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Cleaned CSV
+        </button>
+        <button class="btn-dl btn-dl-outline" id="btn-dl-json">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Download EDA Report (JSON)
+        </button>
+       
+        <button class="btn-dl btn-dl-outline" id="btn-reset">
+          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+          Analyse Another File
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/script.js"></script>
+</body>
+</html>
